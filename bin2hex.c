@@ -29,10 +29,10 @@ int main(int argc, char *argv[])
 	int pad;
 	FILE *fdi, *fdo;
 	unsigned char w[4];
-	int mode16;
+	int mode16,mode32MPU;
 	
 	if((argc != 4) && (argc != 5)) {
-		fprintf(stderr, "Usage: bin2hex <infile> <outfile> <size> [16]\n");
+		fprintf(stderr, "Usage: bin2hex <infile> <outfile> <size> [16,32MPU]\n");
 		return 1;
 	}
 	pad = atoi(argv[3]);
@@ -52,10 +52,32 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	mode16 = (argc == 5) && (strcmp(argv[4], "16") == 0);
+	mode32MPU = (argc == 5) && (strcmp(argv[4], "32MPU") == 0);
 	if(mode16) {
 		while(1) {
 			if(fread(w, 2, 1, fdi) <= 0) break;
 			fprintf(fdo, "%02hhx%02hhx\n", w[1], w[0]);
+			pad--;
+		}
+	} else if (mode32MPU) {
+		while(1) {
+			if(fread(w, 1, 1, fdi) <= 0) break;
+			fprintf(fdo, "%02hhx", w[0]);
+			if(fread(w, 1, 1, fdi) <= 0) { 
+			  fprintf(fdo, "000000\n");
+        break;
+      }
+			fprintf(fdo, "%02hhx", w[0]);
+			if(fread(w, 1, 1, fdi) <= 0) {
+			  fprintf(fdo, "0000\n");
+        break;
+      }
+			fprintf(fdo, "%02hhx", w[0]);
+			if(fread(w, 1, 1, fdi) <= 0) {
+			  fprintf(fdo, "00\n");
+        break;
+      }
+			fprintf(fdo, "%02hhx\n", w[0]);
 			pad--;
 		}
 	} else {
